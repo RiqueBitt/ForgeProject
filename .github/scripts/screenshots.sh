@@ -34,7 +34,9 @@ sleep 45
 W=$(timeout 10 xdotool search --onlyvisible --name "ForgeProject" | head -1)
 [ -n "$W" ] && timeout 10 xdotool windowfocus "$W" windowsize "$W" 1600 1000 windowmove "$W" 0 0
 shot tela-inicial 4
-xdotool mousemove 250 760 click 1; sleep 2   # fecha a tela inicial clicando fora dela
+# fecha a tela inicial (Esc com o mouse sobre ela, depois um clique fora)
+xdotool mousemove 800 450; sleep 1; key Escape; sleep 1
+xdotool mousemove 250 760 click 1; sleep 1; key Escape; sleep 1
 xdotool mousemove 700 600; sleep 1
 shot cena-3d 3
 key KP_Decimal; shot objeto-em-foco 3          # enquadra o objeto selecionado
@@ -51,7 +53,7 @@ key ctrl+Next; key ctrl+Next
 xdotool mousemove 700 600
 key F12; shot render 40
 key Escape; sleep 2
-key ctrl+comma; shot preferencias 5
+xdotool mousemove 700 600; key shift+F12; shot render-em-tempo-real 6
 kill $APP_PID 2>/dev/null; sleep 1
 ls -la "$OUT"
 # encerra a tela virtual e o gerenciador de janelas
