@@ -1,0 +1,35 @@
+captura 1: tela-inicial
+captura 2: cena-3d
+captura 3: objeto-em-foco
+captura 4: modo-edicao
+captura 5: menu-adicionar
+captura 6: modos-de-visualizacao
+captura 7: area-de-trabalho-1
+captura 8: area-de-trabalho-2
+captura 9: area-de-trabalho-3
+captura 10: area-de-trabalho-4
+captura 11: area-de-trabalho-5
+captura 12: area-de-trabalho-6
+captura 13: area-de-trabalho-7
+captura 14: render
+captura 15: render-em-tempo-real
+total 9352
+drwxr-xr-x 2 runner runner   4096 Oct 12 06:24 .
+drwxr-xr-x 6 runner runner   4096 Oct 12 06:22 ..
+-rw-r--r-- 1 runner runner 743658 Oct 12 06:23 01-tela-inicial.png
+-rw-r--r-- 1 runner runner 802815 Oct 12 06:23 02-cena-3d.png
+-rw-r--r-- 1 runner runner 689192 Oct 12 06:23 03-objeto-em-foco.png
+-rw-r--r-- 1 runner runner 389678 Oct 12 06:23 04-modo-edicao.png
+-rw-r--r-- 1 runner runner 698334 Oct 12 06:23 05-menu-adicionar.png
+-rw-r--r-- 1 runner runner 689314 Oct 12 06:23 06-modos-de-visualizacao.png
+-rw-r--r-- 1 runner runner 733844 Oct 12 06:23 07-area-de-trabalho-1.png
+-rw-r--r-- 1 runner runner 581540 Oct 12 06:23 08-area-de-trabalho-2.png
+-rw-r--r-- 1 runner runner 484417 Oct 12 06:23 09-area-de-trabalho-3.png
+-rw-r--r-- 1 runner runner 710625 Oct 12 06:23 10-area-de-trabalho-4.png
+-rw-r--r-- 1 runner runner 556087 Oct 12 06:23 11-area-de-trabalho-5.png
+-rw-r--r-- 1 runner runner 204703 Oct 12 06:24 12-area-de-trabalho-6.png
+-rw-r--r-- 1 runner runner 688669 Oct 12 06:24 13-area-de-trabalho-7.png
+-rw-r--r-- 1 runner runner 971805 Oct 12 06:24 14-render.png
+-rw-r--r-- 1 runner runner 582659 Oct 12 06:24 15-render-em-tempo-real.png
+-rw-r--r-- 1 runner runner    753 Oct 12 06:22 app.log
+-rw-r--r-- 1 runner runner    417 Oct 12 06:24 run.log
