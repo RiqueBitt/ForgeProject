@@ -35,7 +35,7 @@ W=$(timeout 10 xdotool search --onlyvisible --name "ForgeProject" | head -1)
 [ -n "$W" ] && timeout 10 xdotool windowfocus "$W" windowsize "$W" 1600 1000 windowmove "$W" 0 0
 shot tela-inicial 4
 xdotool mousemove 250 760 click 1; sleep 2   # fecha a tela inicial clicando fora dela
-xdotool mousemove 700 600 click 1; sleep 1
+xdotool mousemove 700 600; sleep 1
 shot cena-3d 3
 key KP_Decimal; shot objeto-em-foco 3          # enquadra o objeto selecionado
 key Tab; shot modo-edicao 3                    # modo de edição da malha
