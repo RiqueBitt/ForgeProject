@@ -2,7 +2,8 @@
 # Abre o ForgeProject de verdade numa tela virtual (OpenGL por software,
 # llvmpipe) e captura as áreas de trabalho e um render real.
 set -u
-APP="$(readlink -f "$1")"; OUT="$(mkdir -p "$2" && readlink -f "$2")"
+APP="$(readlink -f "$1")"
+chmod +x "$APP" 2>/dev/null  # o artefato do Actions perde o bit de execução; OUT="$(mkdir -p "$2" && readlink -f "$2")"
 export DISPLAY=:99 APPIMAGE_EXTRACT_AND_RUN=1 LIBGL_ALWAYS_SOFTWARE=1 MESA_GL_VERSION_OVERRIDE=4.5
 Xvfb :99 -screen 0 1600x1000x24 -nolisten tcp >/dev/null 2>&1 &
 sleep 2
