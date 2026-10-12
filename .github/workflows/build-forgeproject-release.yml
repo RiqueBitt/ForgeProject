@@ -1,0 +1,161 @@
+name: Build ForgeProject release
+
+# Compila o ForgeProject (modelagem/animação/render 3D do Project Club,
+# base Bforartists/Blender) para Windows e Linux, no formato da aba Apps:
+#   - Windows: ForgeProject-<versão>-win.zip (ForgeProject.exe na raiz)
+#   - Linux:   ForgeProject.AppImage
+# Os arquivos grandes (texturas, .blend de inicialização, ícones) estão em
+# Git LFS no projeto original: são baixados do Bforartists pelo id do
+# conteúdo, então este repositório não gasta cota de LFS.
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Versão a publicar (ex: 1.0.0)'
+        required: true
+        default: '1.0.0'
+      publish:
+        description: 'Publicar a release'
+        type: boolean
+        default: true
+
+env:
+  UPSTREAM: https://github.com/Bforartists/Bforartists.git
+
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - name: Liberar espaço em disco
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL /usr/local/share/boost
+          df -h /
+      - uses: actions/checkout@v4
+      - name: Arquivos LFS do projeto original
+        run: |
+          git lfs install --local
+          git remote add upstream "$UPSTREAM"
+          git lfs fetch upstream HEAD
+          git lfs checkout
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Dependências e bibliotecas pré-compiladas
+        run: |
+          python ./build_files/linux/install_linux_packages.py
+          python ./build_files/utils/make_update.py --no-blender
+      - name: Configurar
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=gcc-14 -DCMAKE_CXX_COMPILER=g++-14 -DWITH_INSTALL_PORTABLE=ON -S .
+      - name: Compilar
+        run: cmake --build build --config Release -j 4
+      - name: Instalar e empacotar AppImage
+        run: |
+          set -e
+          cmake --install build --prefix install >/dev/null
+          ls install | head
+          BIN=$(find install -maxdepth 2 -type f -name bforartists | head -1)
+          test -n "$BIN"
+          APPDIR=ForgeProject.AppDir
+          mkdir -p $APPDIR
+          cp -a "$(dirname "$BIN")"/. $APPDIR/app/
+          cp release/freedesktop/icons/scalable/apps/bforartists.svg $APPDIR/forgeproject.svg
+          sed -e 's/^Exec=.*/Exec=bforartists %f/' -e 's/^Icon=.*/Icon=forgeproject/' release/freedesktop/bforartists.desktop > $APPDIR/forgeproject.desktop
+          printf '#!/bin/sh\nHERE="$(dirname "$(readlink -f "$0")")"\nexec "$HERE/app/bforartists" "$@"\n' > $APPDIR/AppRun
+          chmod +x $APPDIR/AppRun
+          rm -rf build install
+          wget -q https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage -O appimagetool
+          chmod +x appimagetool
+          mkdir -p dist
+          ARCH=x86_64 ./appimagetool --appimage-extract-and-run $APPDIR dist/ForgeProject.AppImage
+          du -h dist/ForgeProject.AppImage
+      - uses: actions/upload-artifact@v4
+        with:
+          name: forgeproject-linux
+          path: dist/ForgeProject.AppImage
+
+  screenshots:
+    needs: linux
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github
+      - uses: actions/download-artifact@v4
+        with:
+          name: forgeproject-linux
+          path: app
+      - name: Dependências para rodar e capturar
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq xvfb xdotool imagemagick libgl1-mesa-dri libglx-mesa0 libegl1 libxi6 libxxf86vm1 libxfixes3 libxrender1 libxkbcommon0 libsm6 libfuse2 fonts-noto-core
+      - name: Rodar o ForgeProject e capturar telas
+        run: bash .github/scripts/screenshots.sh app/ForgeProject.AppImage shots
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: forgeproject-screenshots
+          path: shots/
+
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v4
+      - name: Arquivos LFS do projeto original
+        shell: bash
+        run: |
+          git lfs install --local
+          git remote add upstream "$UPSTREAM"
+          git lfs fetch upstream HEAD
+          git lfs checkout
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Bibliotecas pré-compiladas
+        run: python ./build_files/utils/make_update.py --no-blender
+      - name: Configurar
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DWITH_INSTALL_PORTABLE=ON -S .
+      - name: Compilar
+        run: cmake --build build --config Release -j 4
+      - name: Empacotar .zip
+        shell: pwsh
+        run: |
+          cmake --install build --config Release --prefix install | Out-Null
+          $exe = Get-ChildItem -Path install -Recurse -Filter bforartists.exe | Select-Object -First 1
+          if (-not $exe) { throw "bforartists.exe não foi gerado" }
+          $dir = $exe.DirectoryName
+          $launcher = Join-Path $dir "bforartists-launcher.exe"
+          if (Test-Path $launcher) { Copy-Item $launcher (Join-Path $dir "ForgeProject.exe") } else { throw "launcher não encontrado" }
+          New-Item -ItemType Directory -Force dist | Out-Null
+          Compress-Archive -Path "$dir\*" -DestinationPath "dist\ForgeProject-${{ inputs.version }}-win.zip"
+          Get-Item dist\*.zip | Select-Object Name, Length
+      - uses: actions/upload-artifact@v4
+        with:
+          name: forgeproject-windows
+          path: dist/*.zip
+
+  release:
+    if: ${{ inputs.publish }}
+    needs: [linux, windows, screenshots]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ inputs.version }}
+          name: ForgeProject ${{ inputs.version }}
+          body: |
+            ForgeProject ${{ inputs.version }} — modelagem, animação e render 3D do Project Club (baseado no Bforartists/Blender, GNU GPL).
+            - Windows: ForgeProject-${{ inputs.version }}-win.zip
+            - Linux: ForgeProject.AppImage
+            Instale e atualize pela aba **Apps** do Project Club.
+          files: |
+            dist/forgeproject-linux/ForgeProject.AppImage
+            dist/forgeproject-windows/*.zip
+            dist/forgeproject-screenshots/*.png
