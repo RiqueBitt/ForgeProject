@@ -47,13 +47,15 @@ jobs:
           python ./build_files/linux/install_linux_packages.py
           python ./build_files/utils/make_update.py --no-blender
       - name: Configurar
-        run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=gcc-14 -DCMAKE_CXX_COMPILER=g++-14 -DWITH_INSTALL_PORTABLE=ON -S .
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=gcc-14 -DCMAKE_CXX_COMPILER=g++-14 -DWITH_INSTALL_PORTABLE=ON -DWITH_JACK_DYNLOAD=ON -DWITH_PULSEAUDIO_DYNLOAD=ON -DWITH_PIPEWIRE=OFF -DWITH_PIPEWIRE_DYNLOAD=ON -S .
       - name: Compilar
         run: cmake --build build --config Release -j 4
       - name: Instalar e empacotar AppImage
         run: |
           set -e
           cmake --install build --prefix install >/dev/null
+          echo "Bibliotecas do sistema exigidas pelo binário (fora do pacote):"
+          ldd install/bforartists | awk '/=>/ && $3 !~ /install/ {print "  " $1}' | sort -u
           ls install | head
           BIN=$(find install -maxdepth 2 -type f -name bforartists | head -1)
           test -n "$BIN"
